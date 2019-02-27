@@ -213,7 +213,7 @@ void synchronizeBorders(bool** fields, int num, int xPerrow, int w, int h)
 
 		if (downIndex < num)
 		{
-			bool* downField = fields[rightIndex];
+			bool* downField = fields[downIndex];
 
 			for (int x = 0; x < rowSize; ++x)
 			{
