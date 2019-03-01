@@ -16,6 +16,7 @@
 #include <omp.h>
 #include <string>
 #include <fstream>
+#include <thread>
 
 #define min(x, y) (x > y ? y : x)
 
@@ -187,7 +188,7 @@ void synchronizeBorders(bool** fields, int num, int xPerrow, int w, int h)
 
 			for (int y = 0; y < height; ++y)
 			{
-				field[y * rowSize] = leftField[(y + 1) * rowSize - 1];
+				field[y * rowSize] = leftField[(y + 1) * rowSize - 2];
 			}
 		}
 
@@ -197,7 +198,7 @@ void synchronizeBorders(bool** fields, int num, int xPerrow, int w, int h)
 
 			for (int x = 0; x < rowSize; ++x)
 			{
-				field[x] = upField[x + (height - 1) * rowSize];
+				field[x] = upField[x + (height - 2) * rowSize];
 			}
 		}
 
@@ -207,7 +208,7 @@ void synchronizeBorders(bool** fields, int num, int xPerrow, int w, int h)
 
 			for (int y = 0; y < height; ++y)
 			{
-				field[(y + 1) * rowSize - 1] = rightField[y * rowSize];
+				field[(y + 1) * rowSize - 1] = rightField[(y * rowSize) + 1];
 			}
 		}
 
@@ -217,7 +218,7 @@ void synchronizeBorders(bool** fields, int num, int xPerrow, int w, int h)
 
 			for (int x = 0; x < rowSize; ++x)
 			{
-				field[x + (height - 1) * rowSize] = downField[x];
+				field[x + (height - 1) * rowSize] = downField[x + rowSize];
 			}
 		}
 	}
@@ -285,7 +286,8 @@ void game(int w, int h)
 
 #pragma omp master
 			{
-				Sleep(100);
+				using namespace std::literals;
+				std::this_thread::sleep_for(100ms);
 				activeField = !activeField;
 			}
 		}
