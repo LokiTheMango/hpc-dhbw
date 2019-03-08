@@ -205,7 +205,7 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 	//fflush(stdout);
 
 	MPI_File file;
-	MPI_File_open(MPI_COMM_SELF, name.data(), MPI_MODE_CREATE| MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+	MPI_File_open(MPI_COMM_SELF, name.data(), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
 	//FILE* f;
 	//fopen_s(&f, name.data(), "wb");
 
@@ -217,7 +217,7 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 			// This indicates that there is an error somewhere else, but
 			// as the game works fine now, I'll just keep this!
 			int yy = y;
-			if(rank % 2 == 1)
+			if (rank % 2 == 1)
 			{
 				yy = (starty + dim - 1) - yy + starty;
 			}
@@ -363,34 +363,22 @@ bool evolve(bool* currentfield, bool* newfield, int w, int h, int startx, int st
 
 bool hasChangedGlobally(MPI_Comm comm, bool hasChanged)
 {
-	if (rank != 0)
+	bool* buffer = nullptr;
+	int size = 0;
+
+	if (rank == 0)
 	{
-		bool hasChangedBuf = hasChanged;
-		MPI_Send(&hasChangedBuf, 1, MPI_CHAR, 0, 10, comm);
-
-		MPI_Status status;
-		MPI_Recv(&hasChangedBuf, 1, MPI_CHAR, 0, 10, comm, &status);
-
-		return hasChangedBuf;
+		MPI_Comm_size(comm, &size);
+		buffer = (bool*)calloc(size, sizeof(bool));
 	}
 
-	int size;
-	MPI_Comm_size(comm, &size);
+	MPI_Gather(&hasChanged, 1, MPI_CHAR, buffer, 1, MPI_CHAR, 0, comm);
 
-	for (int i = 1; i < size; ++i)
-	{
-		bool hasChangedBuf;
-		MPI_Status status;
-		MPI_Recv(&hasChangedBuf, 1, MPI_CHAR, i, 10, comm, &status);
+	for (int i = 0; i < size; ++i) hasChanged |= buffer[i];
 
-		hasChanged |= hasChangedBuf;
-	}
+	if (buffer) free(buffer);
 
-	for (int i = 1; i < size; ++i)
-	{
-		bool hasChangedBuf = hasChanged;
-		MPI_Send(&hasChangedBuf, 1, MPI_CHAR, i, 10, comm);
-	}
+	MPI_Bcast(&hasChanged, 1, MPI_CHAR, 0, comm);
 
 	return hasChanged;
 }
