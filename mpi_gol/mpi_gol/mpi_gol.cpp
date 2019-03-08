@@ -204,11 +204,10 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 	//printf("[%d] Writing %s\n", rank, name.data());
 	//fflush(stdout);
 
-	//MPI_File file;
-	//MPI_File_open(comm, name.data(),
-	//              MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
-	FILE* f;
-	fopen_s(&f, name.data(), "wb");
+	MPI_File file;
+	MPI_File_open(MPI_COMM_SELF, name.data(), MPI_MODE_CREATE| MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+	//FILE* f;
+	//fopen_s(&f, name.data(), "wb");
 
 	for (int y = starty; y < starty + dim; y++)
 	{
@@ -224,15 +223,15 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 			}
 
 			auto val = data[calcIndex(w, x, yy)];
-			//MPI_File_write(file, &val, 1, MPI_CHAR, MPI_STATUS_IGNORE);
-			fwrite(&val, 1, 1, f);
+			MPI_File_write(file, &val, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+			//fwrite(&val, 1, 1, f);
 		}
 	}
 
-	fclose(f);
+	//fclose(f);
 
 	//MPI_File_sync(file);
-	//MPI_File_close(&file);
+	MPI_File_close(&file);
 
 	//printf("[%d] Barrier\n", rank);
 	//fflush(stdout);
@@ -248,31 +247,32 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 		for (int i = 0; i < size; ++i)
 		{
 			std::string name = "field-" + std::to_string(timestep) + "-" + std::to_string(i) + ".bin";
-			//MPI_File_open(comm, name.data(),MPI_MODE_UNIQUE_OPEN | MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
+			MPI_File_open(MPI_COMM_SELF, name.data(), MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
 
-			//MPI_Offset offset;
-			//MPI_File_get_size(file, &offset);
+			MPI_Offset sz;
+			MPI_File_get_size(file, &sz);
 
-			FILE* fp;
-			fopen_s(&fp, name.data(), "rb");
-			fseek(fp, 0L, SEEK_END);
-			const auto sz = ftell(fp);
-			rewind(fp);
+			//FILE* fp;
+			//fopen_s(&fp, name.data(), "rb");
+			//fseek(fp, 0L, SEEK_END);
+			//const auto sz = ftell(fp);
+			//rewind(fp);
 
 			char* buffer = (char*)calloc(sz + 1, sizeof(char));
-			//MPI_File_read(file, buffer, offset, MPI_CHAR, MPI_STATUS_IGNORE);
-			fread(buffer, 1, sz, fp);
+			MPI_File_read(file, buffer, sz, MPI_CHAR, MPI_STATUS_IGNORE);
+			//fread(buffer, 1, sz, fp);
 
 			buffers.emplace_back(buffer, sz);
 
 			//printf("Read %d -> %d\n", i, (int)sz);
 
-			//MPI_File_close(&file);
-			fclose(fp);
+			MPI_File_close(&file);
+			//fclose(fp);
 			free(buffer);
 		}
 
 		printf("Timestep %d\n", realts);
+		fflush(stdout);
 
 		for (int y = 0; y < dim * 2; y++)
 		{
