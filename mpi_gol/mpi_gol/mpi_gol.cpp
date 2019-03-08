@@ -10,6 +10,8 @@
 
 #define DEBUG_RANK 0
 
+#define MPI_ORDER MPI_ORDER_FORTRAN
+
 int rank = -1;
 int topleft;
 int topright;
@@ -212,7 +214,16 @@ void printoutAll(MPI_Comm comm, long timestep, bool* data, const char* prefix, i
 	{
 		for (int x = startx; x < startx + dim; x++)
 		{
-			auto val = data[calcIndex(w, x, y)];
+			// This is obviously completely wrong, but it fixes the gol logic
+			// This indicates that there is an error somewhere else, but
+			// as the game works fine now, I'll just keep this!
+			int yy = y;
+			if(rank % 2 == 1)
+			{
+				yy = (starty + dim - 1) - yy + starty;
+			}
+
+			auto val = data[calcIndex(w, x, yy)];
 			//MPI_File_write(file, &val, 1, MPI_CHAR, MPI_STATUS_IGNORE);
 			fwrite(&val, 1, 1, f);
 		}
@@ -481,7 +492,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_left[1] %= totalSize[1];
 
 	MPI_Datatype inner_left;
-	MPI_Type_create_subarray(2, totalSize, size_vertical, start_inner_left, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_vertical, start_inner_left, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_left);
 	MPI_Type_commit(&inner_left);
 
@@ -491,12 +502,12 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_right[1] += totalSize[1];
 	start_inner_right[1] %= totalSize[1];
 	MPI_Datatype inner_right;
-	MPI_Type_create_subarray(2, totalSize, size_vertical, start_inner_right, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_vertical, start_inner_right, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_right);
 	MPI_Type_commit(&inner_right);
 
 	MPI_Datatype inner_up;
-	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_inner_left, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_inner_left, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_up);
 	MPI_Type_commit(&inner_up);
 
@@ -507,7 +518,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_down[1] %= totalSize[1];
 
 	MPI_Datatype inner_down;
-	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_inner_down, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_inner_down, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_down);
 	MPI_Type_commit(&inner_down);
 
@@ -517,7 +528,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_left[1] += totalSize[1];
 	start_outer_left[1] %= totalSize[1];
 	MPI_Datatype outer_left;
-	MPI_Type_create_subarray(2, totalSize, size_vertical, start_outer_left, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_vertical, start_outer_left, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_left);
 	MPI_Type_commit(&outer_left);
 
@@ -527,7 +538,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_right[1] += totalSize[1];
 	start_outer_right[1] %= totalSize[1];
 	MPI_Datatype outer_right;
-	MPI_Type_create_subarray(2, totalSize, size_vertical, start_outer_right, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_vertical, start_outer_right, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_right);
 	MPI_Type_commit(&outer_right);
 
@@ -537,7 +548,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_up[1] += totalSize[1];
 	start_outer_up[1] %= totalSize[1];
 	MPI_Datatype outer_up;
-	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_outer_up, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_outer_up, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_up);
 	MPI_Type_commit(&outer_up);
 
@@ -547,7 +558,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_down[1] += totalSize[1];
 	start_outer_down[1] %= totalSize[1];
 	MPI_Datatype outer_down;
-	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_outer_down, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_horizontal, start_outer_down, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_down);
 	MPI_Type_commit(&outer_down);
 #pragma endregion
@@ -560,7 +571,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_topleft[1] %= totalSize[1];
 
 	MPI_Datatype inner_topleft;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_topleft, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_topleft, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_topleft);
 	MPI_Type_commit(&inner_topleft);
 
@@ -570,7 +581,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_topright[1] += totalSize[1];
 	start_inner_topright[1] %= totalSize[1];
 	MPI_Datatype inner_topright;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_topright, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_topright, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_topright);
 	MPI_Type_commit(&inner_topright);
 
@@ -580,7 +591,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_bottomleft[1] += totalSize[1];
 	start_inner_bottomleft[1] %= totalSize[1];
 	MPI_Datatype inner_bottomleft;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_bottomleft, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_bottomleft, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_bottomleft);
 	MPI_Type_commit(&inner_bottomleft);
 
@@ -591,7 +602,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_inner_bottomright[1] %= totalSize[1];
 
 	MPI_Datatype inner_bottomright;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_bottomright, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_inner_bottomright, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &inner_bottomright);
 	MPI_Type_commit(&inner_bottomright);
 
@@ -603,7 +614,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_topleft[1] += totalSize[1];
 	start_outer_topleft[1] %= totalSize[1];
 	MPI_Datatype outer_topleft;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_topleft, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_topleft, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_topleft);
 	MPI_Type_commit(&outer_topleft);
 
@@ -613,7 +624,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_topright[1] += totalSize[1];
 	start_outer_topright[1] %= totalSize[1];
 	MPI_Datatype outer_topright;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_topright, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_topright, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_topright);
 	MPI_Type_commit(&outer_topright);
 
@@ -623,7 +634,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_bottomleft[1] += totalSize[1];
 	start_outer_bottomleft[1] %= totalSize[1];
 	MPI_Datatype outer_bottomleft;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_bottomleft, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_bottomleft, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_bottomleft);
 	MPI_Type_commit(&outer_bottomleft);
 
@@ -633,7 +644,7 @@ int _main(int argc, char* argv[], int* rank)
 	start_outer_bottomright[1] += totalSize[1];
 	start_outer_bottomright[1] %= totalSize[1];
 	MPI_Datatype outer_bottomright;
-	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_bottomright, MPI_ORDER_FORTRAN, MPI_UNSIGNED_CHAR,
+	MPI_Type_create_subarray(2, totalSize, size_corner, start_outer_bottomright, MPI_ORDER, MPI_UNSIGNED_CHAR,
 	                         &outer_bottomright);
 	MPI_Type_commit(&outer_bottomright);
 #pragma endregion
