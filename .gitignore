@@ -50,3 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+*.log
+*.tlog
+*.suo
+*.db
+*.opendb
+*.ipch
+*.vti
+*.bin
+*.ipdb
+*.iobj
